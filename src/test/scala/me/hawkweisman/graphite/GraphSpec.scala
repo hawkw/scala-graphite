@@ -14,6 +14,13 @@ class GraphSpec
     with OptionValues {
 
   "An unweighted, directed graph" when {
+    "empty" should {
+      "have graphSize 0" in {
+        new Unweighted.Digraph[Int] should have 'graphSize (0) }
+      "have size 0" in { new Unweighted.Digraph[Int] should have size 0 }
+      "have graphOrder 0" in {new Unweighted.Digraph[Int] should have
+        'graphOrder (0)}
+    }
     "using operators to create edges" should {
       "create an edge from A to B using the ~> operator" in {
         val g = new Unweighted.Digraph[Int]
@@ -109,6 +116,12 @@ class GraphSpec
   }
 
   "An Unweighted, undirected graph" when {
+    "empty" should {
+      "have graphSize 0" in {
+        new Unweighted.Undigraph[Int] should have 'graphSize (0) }
+      "have size 0" in { new Unweighted.Undigraph[Int] should have size 0 }
+      "have graphOrder 0" in {new Unweighted.Undigraph[Int] should have
+        'graphOrder (0)}
     "using operators to create edges" should {
       "create an edge from A to B using the ~> operator" in {
         val g = new Unweighted.Undigraph[Int]
