@@ -1,27 +1,30 @@
 language: scala
 scala:
-  - 2.12.1
-  - 2.11.8
+- 2.12.1
+- 2.11.8
 jdk:
-  - oraclejdk8
+- oraclejdk8
 matrix:
   fast_finish: true
   allow_failures:
-    - scala: 2.11.8
+  - scala: 2.11.8
 cache:
   directories:
-    - $HOME/.ivy2/cache
-    - $HOME/.sbt/boot/
-    - tmp/
+  - $HOME/.ivy2/cache
+  - $HOME/.sbt/boot/
+  - tmp/
 script:
-  - sbt ++$TRAVIS_SCALA_VERSION compile
-  - sbt ++$TRAVIS_SCALA_VERSION test
-  - find $HOME/.sbt -name "*.lock" | xargs rm
-  - find $HOME/.ivy2 -name "ivydata-*.properties" | xargs rm
+- sbt ++$TRAVIS_SCALA_VERSION compile
+- sbt ++$TRAVIS_SCALA_VERSION test
+- find $HOME/.sbt -name "*.lock" | xargs rm
+- find $HOME/.ivy2 -name "ivydata-*.properties" | xargs rm
 after_success:
-  - sbt ++$TRAVIS_SCALA_VERSION clean coverage test
-  - sbt ++$TRAVIS_SCALA_VERSION coverageReport
-  - sbt ++$TRAVIS_SCALA_VERSION coverageAggregate
-  - sbt ++$TRAVIS_SCALA_VERSION codacyCoverage
-  - python <(curl -s https://raw.githubusercontent.com/TouK/sputnik-ci/master/sputnik-ci.py)
-  - bash <(curl -s https://codecov.io/bash)
+- sbt ++$TRAVIS_SCALA_VERSION clean coverage test
+- sbt ++$TRAVIS_SCALA_VERSION coverageReport
+- sbt ++$TRAVIS_SCALA_VERSION coverageAggregate
+- sbt ++$TRAVIS_SCALA_VERSION codacyCoverage
+- python <(curl -s https://raw.githubusercontent.com/TouK/sputnik-ci/master/sputnik-ci.py)
+- bash <(curl -s https://codecov.io/bash)
+env:
+  global:
+    secure: PoNdPcBRj86Aj9ypZd3tdlS81bcgh5aaLmPrNIWF/kVoS+2EVzPDmgaHAObQlFCAfDf0d3VFRrLZdGbJC90gLxBOcl+jNx/hXhdW5+NHvuhTCEMkX/UmokCi2NG/+GznzYPQ2bS4rnp50RKGDvlHmcTUx+0w7tH7TV3CjyaXQhiMoHBWPlIafIC2gnqqiz1C6xZO4e7Kc+BSfZSMEYt/QNeNSEHCO8q0eoY/slj2rntnX3XfY209K2C+vE8Ec2lufDzdp7hknNIqpmpthPNHEpDnYljM689ElTa6z/5y9Meu9EoeZmVP4oGWDomwWDdCZxTNawPAY1akIolv8sEJcMZ8m0OovaGPW6+MpzfFWMZ38XZKW2Q0r+61ODUGFKms/nW+JsRMm/PVIFxYLWYIiIegxXCnSZGiQVeeuM2PdnYb0Y03jREwAqdF8wG/ktSTaGk7RMFRQwWbegxFSrYLOqoYqsgqzrer9vVFHcX81GKSdJVi4AQpCJIUm59lUZ2uN9j8feW2XDkcKexLpa0bGwpi/FdnxJYLfj1xRrXI++4rp10ttFGLB42ZiLq5ntRig3F1Elv5wjzON6PrlGmSSzVl/BUvyY6HK6SH59pq8adY2t0ifs1wHlHCKG77BggvtqjxudjPtUDr4u1ZnyjFUyJ0EL1LYvfDtnZLAvWuS0Y=
