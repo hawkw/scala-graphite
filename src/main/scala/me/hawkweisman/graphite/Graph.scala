@@ -14,13 +14,19 @@ trait Graph[V] {
   /** The type of nodes in this graph */
   type Node <: NodeLike
 
+  type Edge <: EdgeLike
   /** The type of edges in this graph.
     *
     * In an edge-weighted graph, this will generally be a tuple of the form
     * `(Node, Weight)`, while in a non-edge-weighted graph, this is just a
     * `Node`.
     */
-  type Edge
+  trait EdgeLike { val node: Node }
+
+  object Edge {
+    def unapply(e: EdgeLike): Node = e.node
+  }
+
 
   /** Class representing a node in a graph.
     *
@@ -29,14 +35,10 @@ trait Graph[V] {
     *
     * @param value the value to store at this node.
     */
-  abstract class NodeLike(val value: V) { self: Node =>
-    protected[this] var _edges: Set[Edge] = Set()
-
-    /** @return the set of edges from this node. */
-    @inline final def edges: Set[Edge] = _edges
+  abstract class NodeLike(val value: V, val edges: Set[Edge]) { self: Node =>
 
     /** Add an edge from this node */
-    @inline protected[this] def addEdge(e: Edge): Unit =  _edges = _edges + e
+    @inline protected[this] def addEdge(e: Edge): Node = edges = edges + e
 
     /** Operator for creating an edge from another node to this node.
       *
@@ -95,7 +97,7 @@ trait Graph[V] {
       * to that node.
       * @return the degree of this node.
       */
-    @inline final def degree: Int = _nodes count { _ hasEdgeTo this }
+    @inline final def degree: Int = nodes count { _ hasEdgeTo this }
 
     /** Find the shortest path from this node to the specified node.
       *
@@ -105,11 +107,11 @@ trait Graph[V] {
     def shortestPathTo(to: Node): Seq[Node]
   }
 
-  protected[this] var _nodes: Seq[Node] = Nil
+  val nodes: Set[Node] = Set()
 
   /** @return A sequence of all the [[Node]]s in this graph
     */
-  @inline final def nodes: Seq[Node] = _nodes
+  @inline final def nodes: Seq[Node] = nodes
 
   /** Construct and return a new [[Node]].
     *
@@ -123,7 +125,7 @@ trait Graph[V] {
   /** The _order_ of a graph is the number of nodes in the graph
     * @return the number of nodes in this graph
     */
-  @inline final def graphOrder: Int = _nodes length
+  @inline final def graphOrder: Int = nodes length
 
   /** The _size_ of a graph is the number of edges in the graph
     *
@@ -134,7 +136,7 @@ trait Graph[V] {
     *
     * @return the number of edges in this graph
     */
-  @inline def graphSize: Int = _nodes map { _.edges.size } sum
+  @inline def graphSize: Int = nodes map { _.edges.size } sum
 
   /** Find the shortest path from one [[Node]] to another.
     *
@@ -151,7 +153,7 @@ trait Graph[V] {
     * @return      `Some(Node)` if a matching node was found, `None` otherwise
     */
   @inline final def nodeFor(value: V): Option[Node]
-  = _nodes find { _.value == value}
+  = nodes find { _.value == value }
 
 //  /** Apply a function to each [[Node]] in this graph.
 //    * @param f
@@ -159,4 +161,6 @@ trait Graph[V] {
 //    */
 //  @inline final def foreach[U](f: Node => U): Unit
 //  = _nodes foreach f
+
+  @inline final def unapply(value: V): Option[Node] = nodeFor(value)
 }
