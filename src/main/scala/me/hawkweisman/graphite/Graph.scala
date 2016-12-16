@@ -13,19 +13,12 @@ trait Graph[V] {
 
   /** The type of nodes in this graph */
   type Node <: NodeLike
-
-  type Edge <: EdgeLike
-  /** The type of edges in this graph.
-    *
-    * In an edge-weighted graph, this will generally be a tuple of the form
-    * `(Node, Weight)`, while in a non-edge-weighted graph, this is just a
-    * `Node`.
-    */
-  trait EdgeLike { val node: Node }
+  type Edge <: EdgeLike[Node]
 
   object Edge {
-    def unapply(e: EdgeLike): Node = e.node
+    def unapply(e: Edge): Node = e.node
   }
+
 
 
   /** Class representing a node in a graph.
@@ -35,10 +28,12 @@ trait Graph[V] {
     *
     * @param value the value to store at this node.
     */
-  abstract class NodeLike(val value: V, val edges: Set[Edge]) { self: Node =>
+  trait NodeLike { self: Node =>
+    def value: V
+    def edges: Set[Edge]
 
     /** Add an edge from this node */
-    @inline protected[this] def addEdge(e: Edge): Node = edges = edges + e
+    @inline protected[this] def addEdge(e: Edge): Node = ???
 
     /** Operator for creating an edge from another node to this node.
       *
@@ -48,7 +43,7 @@ trait Graph[V] {
       */
     @inline final def ~> (that: Edge): Unit = this connectTo that
 
-    def connectTo(that: Edge): Unit
+    def connectTo(that: Edge): Unit = ???
 
     /** Operator for creating an edge from another node to this node.
       *
@@ -56,7 +51,7 @@ trait Graph[V] {
       *
       * @param  that   the node to form an edge to this node.
       */
-    def <~ (that: Edge): Unit
+    def <~ (that: Edge): Unit = ???
 
     /**
       * Operator for checking if this node has an edge to another node.
@@ -91,7 +86,7 @@ trait Graph[V] {
       this <~ that
     }
 
-    def hasEdgeTo(that: Node): Boolean
+    final def hasEdgeTo(that: Node): Boolean = edges exists { _.node == that }
 
     /** The _degree_ (or _valency_) of a node is the number of edges connecting
       * to that node.
@@ -107,11 +102,14 @@ trait Graph[V] {
     def shortestPathTo(to: Node): Seq[Node]
   }
 
-  val nodes: Set[Node] = Set()
+  def nodes: Iterator[Node]
 
-  /** @return A sequence of all the [[Node]]s in this graph
-    */
-  @inline final def nodes: Seq[Node] = nodes
+  def edges: Iterator[Edge]
+    = for { node <- nodes; edge <- node.edges } yield edge
+
+//  /** @return A sequence of all the [[Node]]s in this graph
+//    */
+//  @inline final def nodes: Seq[Node] = nodes
 
   /** Construct and return a new [[Node]].
     *
@@ -163,4 +161,46 @@ trait Graph[V] {
 //  = _nodes foreach f
 
   @inline final def unapply(value: V): Option[Node] = nodeFor(value)
+}
+object Graph {
+
+  implicit class BuildableValue[V](val self: V) {
+    def ~> (other: V) = DiEdgeBuilder(self, other)
+    def ~ (other: V) = UnDiEdgeBuilder(self, other)
+  }
+
+  trait EdgeBuilder[V, G <: Graph[V]] {
+    def to: V
+    def from: V
+  }
+
+  case class UnDiEdgeBuilder[V, G <: Undirected[V]](to: V, from: V)
+  extends EdgeBuilder[V, G]
+//
+//  trait UnWEdgeBuilder[V, G <: Unweighted[V]]
+//  extends EdgeBuilder[V, G]
+
+  trait WEdgeBuilder[V, W]
+  extends EdgeBuilder[V, EdgeWeighted[V, W]] {
+    def weight: W
+  }
+
+  case class WDiEdgeBuilder[V, W: Numeric : Ordering]
+  ( to: V, from: V, weight: W)
+  extends EdgeBuilder[V, EdgeWeighted.Digraph[V, W]](to, from)
+    with WEdgeBuilder[V, W]
+
+  case class DiEdgeBuilder[V, G <: Directed[V]](to: V, from: V)
+  extends EdgeBuilder[V, G] {
+    def $[W: Numeric : Ordering](weight: W): WDiEdgeBuilder[V, W]
+      = WDiEdgeBuilder(to, from, weight)
+  }
+
+
+  def apply[V](ebs: UnDiEdgeBuilder[V, Unweighted.Digraph[V]]*): Unweighted
+  .Digraph[V]
+  = {
+
+  }
+
 }

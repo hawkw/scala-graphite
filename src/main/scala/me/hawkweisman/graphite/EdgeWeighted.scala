@@ -27,17 +27,17 @@ abstract class EdgeWeighted[V, Weight: Numeric: Ordering]
 extends Graph[V] {
 
   override type Node <: EWNode
-  override type Edge = (Node, Weight)
-
+  override type Edge = WeightedEdge[Node, Weight]
 //  @inline protected[this] implicit def edge2node(e: Edge): Node
 //    = e._1
 
-  abstract class EWNode(value: V)
-    extends NodeLike(value) { self: Node =>
+  abstract class EWNode(value: V, edges: Set[Edge])
+    extends NodeLike(value, edges) { self: Node =>
 
     @inline override final def <~ (edge: Edge): Unit = {
-      val (that, weight) = edge
-      that ~> (this, weight)
+//      val (that, weight) = edge
+//      that ~> (this, weight)
+      ???
     }
 
     /** Connect this node to another node with an edge with the given weight.
@@ -47,14 +47,14 @@ extends Graph[V] {
       * @param edge the edge to add
       */
     @throws[IllegalArgumentException]("if the weight is <= 0")
-    override protected[this] def addEdge (edge: Edge): Unit
-    = { val (_, weight: Weight) = edge
-      require(weight > implicitly[Numeric[Weight]].zero)
-      _edges += edge
-    }
+    override protected[this] def addEdge (edge: Edge): Unit = ???
+//    = { val (_, weight: Weight) = edge
+//      require(weight > implicitly[Numeric[Weight]].zero)
+//      _edges += edge
+//    }
 
-    @inline override def hasEdgeTo(node: Node): Boolean
-    = _edges exists { case (n, _) => n == node }
+//    @inline override def hasEdgeTo(node: Node): Boolean
+//    = _edges exists { case (n, _) => n == node }
 
     /** Returns the [[Weight]] of the edge to the given [[Node]], if one exists.
       *
@@ -63,7 +63,8 @@ extends Graph[V] {
       *             `None` otherwise.
       */
     final def weightTo(node: Node): Option[Weight]
-    = _edges find { case (n, _) => n == node } map { case (_, w) => w }
+    = ???
+//    = _edges find { case (n, _) => n == node } map { case (_, w) => w }
   }
 
 }
@@ -90,22 +91,23 @@ object EdgeWeighted {
     * @author        Eliza Weisman
     */
   class Digraph[V, @sp(Int, Long, Float, Double) Weight : Numeric : Ordering]
+  (val nodes: Set[Node])
   extends EdgeWeighted[V, Weight]
     with Directed[V]
     with Traversable[EdgeWeighted[V, Weight]#Node]
     with Requirements {
 
     override type Node = DirectedEWNode
-    override type Edge = (Node, Weight)
 
     override def node(item: V): Node = {
-      val n = new Node(item)
-      _nodes = _nodes :+ n
-      n
+      ???
+//      val n = new Node(item)
+//      _nodes = _nodes :+ n
+//      n
     }
 
-    class DirectedEWNode(value: V)
-      extends EWNode(value)
+    class DirectedEWNode(value: V, edges: Set[Edge])
+      extends EWNode(value, edges)
         with DirectedNode { self: Node =>
 
       /** @inheritdoc
@@ -121,7 +123,7 @@ object EdgeWeighted {
       * @tparam U
       */
     @inline final def foreach[U](f: (EdgeWeighted[V, Weight]#Node) => U): Unit
-    = _nodes foreach f
+      = nodes foreach f
 
   }
 
@@ -181,7 +183,7 @@ object EdgeWeighted {
     with Traversable[EdgeWeighted[V, Weight]#Node]  {
 
     override type Node = UndirectedEWNode
-    override type Edge = (Node, Weight)
+//    override type Edge = (Node, Weight)
 
     override def node(item: V): Node = {
       val n = new Node(item)
@@ -189,7 +191,7 @@ object EdgeWeighted {
       n
     }
 
-    class UndirectedEWNode(value: V)
+    class UndirectedEWNode(value: V, edges: Set[Edge])
       extends EWNode(value)
         with UndirectedNode { self: Node =>
 
@@ -209,7 +211,7 @@ object EdgeWeighted {
       */
     @inline
     override final def foreach[U](f: (EdgeWeighted[V, Weight]#Node) => U): Unit
-      = _nodes foreach f
+      = nodes foreach f
 
     /** @inheritdoc
       *

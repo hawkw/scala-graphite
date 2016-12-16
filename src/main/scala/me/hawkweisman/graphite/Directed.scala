@@ -28,4 +28,16 @@ extends Graph[V] {
 
   }
 
+  def topologicalSort: Option[Seq[Node]] = {
+    def _visit(path: Set[Node], visited: Seq[Node], n: Node): Option[Seq[Node]]
+      = if (path contains n) None
+        else if (visited contains n) Some(visited)
+        else n.edges.foldLeft[Option[Seq[Node]]](Some(visited)){
+          case (None, _) => None
+          case (Some(v2), e) => _visit(path + n, v2, e.node)
+        } map { v3 => n +: v3 }
+//    nodes fold
+  }
+
+
 }

@@ -1,5 +1,7 @@
 package me.hawkweisman.graphite
 
+import me.hawkweisman.graphite.Graph.UnDiEdgeBuilder
+
 /** An unweighted graph.
   *
   * In an unweighted graph, edges are not associated with weights. Finding
@@ -15,10 +17,10 @@ trait Unweighted[V]
 extends Graph[V] {
 
   override type Node <: UWNode
-  override type Edge = Node
+  override type Edge = UnweightedEdge[Node]
 
-  abstract class UWNode(value: V)
-  extends NodeLike(value) { self: Node =>
+  abstract class UWNode
+  extends NodeLike { self: Node =>
 
     def connectTo(node: Node)
 
@@ -28,8 +30,6 @@ extends Graph[V] {
     @inline final def <~ (that: Node): Unit
     = that ~> this
 
-    override def hasEdgeTo(node: Node): Boolean
-    = _edges contains node
   }
 
 
@@ -42,7 +42,7 @@ object Unweighted {
     *
     * Created by eliza on 12/15/16.
     */
-  class Digraph[V]
+  class Digraph[V](val nodes: Set[Unweighted.Digraph[V]#Node])
   extends Unweighted[V]
     with Directed[V]
     with Traversable[Unweighted[V]#Node] {
@@ -50,14 +50,15 @@ object Unweighted {
     override type Node = DirectedUWNode
     override type Edge = Node
 
-    override def node(item: V): Node = {
-      val n = new Node(item)
-      _nodes = _nodes :+ n
-      n
-    }
+    override def node(item: V): Node = ???
+//    = {
+//      val n = new Node(item)
+//      _nodes = _nodes :+ n
+//      n
+//    }
 
-    class DirectedUWNode(value: V)
-    extends UWNode(value)
+    class DirectedUWNode(val value: V, val edges: Set[Edge])
+    extends UWNode
       with DirectedNode { self: Node =>
 
       /** @inheritdoc
@@ -75,9 +76,12 @@ object Unweighted {
       * @tparam U
       */
     @inline override final def foreach[U](f: (Unweighted[V]#Node) => U): Unit
-      = _nodes foreach f
+      = nodes foreach f
 
   }
+
+  type UndigraphBuilders[V]
+    = Seq[UnDiEdgeBuilder[V, Undigraph[V]]]
 
   /** An unweighted directed graph.
     *
@@ -86,23 +90,51 @@ object Unweighted {
     *
     * Created by eliza on 12/15/16.
     */
-  class Undigraph[V]
+  class Undigraph[V](builders: UndigraphBuilders[V])
   extends Unweighted[V]
     with Undirected[V]
     with Traversable[Unweighted[V]#Node] {
 
     override type Node = UndirectedUWNode
-    override type Edge = Node
 
-    override def node(item: V): Node = {
-      val n = new Node(item)
-      _nodes = _nodes :+ n
-      n
+    val nodes: Set[Node] = {
+      def _initialize( edges: Map[V, Set[V]]
+                     , inits:    UndigraphBuilders[V]): Set[Node]
+        = inits match {
+            case Seq() =>
+              val newNodes: Map[V, Node] = Map(edges.keySet map { v =>
+                (v, new UndirectedUWNode(v))
+              })
+              for { (v, node: Node) <- newNodes
+                    toValue <- edges(v)
+                    toNode <- newNodes(toValue)}
+              yield {
+                node.edges += UnweightedEdge(toNode)
+                node
+              }
+//              for { (value, outEdges) <- ns } yield { new Node(value, )}
+            case UnDiEdgeBuilder(to: V, from: V) +: rest =>
+              _initialize( edges updated(from, edges.getOrElse(from, Set())+to)
+                         , rest)
+        }
+
+      _initialize(Map[V, Set[V]](), builders)
     }
 
-    class UndirectedUWNode(value: V)
-      extends UWNode(value)
+    override def node(item: V): Node = ???
+//    = {
+//      val n = new Node(item)
+//      n
+//    }
+
+    class UndirectedUWNode(val value: V)
+      extends UWNode
         with UndirectedNode { self: Node =>
+        def edges: Set[Edge] = _edges
+
+        private[Undigraph] def edges_=(e: Edge): Unit = { _edges += e }
+
+        private[this] var _edges: Set[Edge] = Set()
 
       /** @inheritdoc
         *i
@@ -110,7 +142,7 @@ object Unweighted {
         * the fewest edges to be traversed.
         */
       def shortestPathTo(to: Node): Seq[Node] = ???
-
+      def connectTo(that: Node): Node = ???
     }
 
     /** Apply a function to each [[Node]] in this graph.
@@ -119,7 +151,7 @@ object Unweighted {
       * @tparam U
       */
     @inline override final def foreach[U](f: (Unweighted[V]#Node) => U): Unit
-    = _nodes foreach f
+    = nodes foreach f
 
     /** @inheritdoc
       *
